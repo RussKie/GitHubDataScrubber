@@ -167,7 +167,9 @@ static string IsValidSentence(string sentence)
 static string ScrubContent(string content)
 {
     if (string.IsNullOrEmpty(content))
-        return content;
+    {
+        return string.Empty;
+    }
 
     // Remove markdown tables, including those with inconsistent spacing
     content = Regex.Replace(content, "^\\s*\\|.*\\|\\s*$", "", RegexOptions.Multiline);
@@ -200,10 +202,12 @@ static string ScrubContent(string content)
 static List<string> SplitIntoSentences(string content)
 {
     if (string.IsNullOrEmpty(content))
-        return new List<string>();
+    {
+        return [];
+    }
 
-    List<string> allSentences = new();
-    string[] lines = content.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
+    List<string> allSentences = [];
+    string[] lines = content.Split(["\r\n", "\n", "\r"], StringSplitOptions.RemoveEmptyEntries);
 
     foreach (var line in lines)
     {
@@ -211,7 +215,7 @@ static List<string> SplitIntoSentences(string content)
         if (!string.IsNullOrEmpty(cleanedLine))
         {
             string[] sentences = Regex.Split(cleanedLine, "(?<=[.!?])\\s+");
-            allSentences.AddRange(sentences);
+            allSentences.AddRange(sentences.Where(s => s.Length > 0));
         }
     }
 
@@ -221,6 +225,11 @@ static void WriteSentencesToFile(StreamWriter writer, List<string> sentences)
 {
     foreach (var sentence in sentences)
     {
+        if (string.IsNullOrEmpty(sentence))
+        {
+            continue;
+        }
+
         string escapedSentence = sentence.Replace("\"", "\"\""); // Escape double quotes
         writer.WriteLine($"\"{escapedSentence}\""); // Wrap in double quotes
     }
