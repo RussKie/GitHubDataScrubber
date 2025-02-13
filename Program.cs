@@ -152,12 +152,7 @@ static string IsValidSentence(string sentence)
     // Remove GitHub issue-closing keywords followed by issue numbers
     sentence = Regex.Replace(sentence, "^(Fix|Fixes|Close|Closes|Resolves)(:?)\\s+#\\d+.*", "", RegexOptions.Singleline | RegexOptions.IgnoreCase);
     sentence = Regex.Replace(sentence, "^(Fix|Fixes|Close|Closes|Resolves)(:?)\\s+[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+#\\d+.*", "", RegexOptions.Singleline | RegexOptions.IgnoreCase);
-
-    sentence = sentence.Replace("<details>", "").Replace("</details>", "");
-    sentence = sentence.Replace("<summary>", "").Replace("</summary>", "");
-    sentence = sentence.Replace("<div>", "").Replace("</div>", "");
-    sentence = sentence.Replace("<span>", "").Replace("</span>", "");
-
+    
     sentence = sentence.Trim();
 
     if (string.IsNullOrWhiteSpace(sentence))
@@ -174,6 +169,12 @@ static string ScrubContent(string content)
     if (string.IsNullOrEmpty(content))
         return content;
 
+    // Remove markdown tables, including those with inconsistent spacing
+    content = Regex.Replace(content, "^\\s*\\|.*\\|\\s*$", "", RegexOptions.Multiline);
+    content = Regex.Replace(content, "^\\s*-+:?-+\\s*$", "", RegexOptions.Multiline);
+
+    content = Regex.Replace(content, "\\</?(table|thead|tr|td|details|summary|span|div|p|video|img|a)[^\\>]*\\>", "", RegexOptions.Singleline);
+
     // Replace GitHub aliases (@alias, @alias-suffix, @alias_suffix) with "@github"
     content = Regex.Replace(content, "@\\w+(-\\w+|_\\w+)?", "@github");
 
@@ -181,15 +182,11 @@ static string ScrubContent(string content)
     content = Regex.Replace(content, "\\[.*?\\]\\(.*?\\)", "#url");
 
     // Replace explicit URLs (http:// or https://) with "#url"
+    content = Regex.Replace(content, "\"https?://\\S+\"", "#url");
     content = Regex.Replace(content, "https?://\\S+", "#url");
 
     // Remove markdown quotations (lines starting with '> ')
     content = Regex.Replace(content, "^>.*", "", RegexOptions.Multiline);
-
-
-    // Remove markdown tables, including those with inconsistent spacing
-    content = Regex.Replace(content, "^\\s*\\|.*\\|\\s*$", "", RegexOptions.Multiline);
-    content = Regex.Replace(content, "^\\s*-+:?-+\\s*$", "", RegexOptions.Multiline);
 
     // Replace code blocks (triple or quadruple backticks) with "#code"
     content = Regex.Replace(content, "```.*?```|````.*?````", "#code", RegexOptions.Singleline);
